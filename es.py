@@ -131,6 +131,75 @@ class CMAES:
     r = self.es.result
     return (r[0], -r[1], -r[1], r[6])
 
+class PSO:
+    ''' Standard Particle Swarm Optimisation '''
+    def __init__(self, num_params,
+                 c1 = 0.6,
+                 c2 = 0.3,
+                 w = 0.4,
+                 popsize = 256,
+                 sigma = 0.1,
+                 weight_decay=0.01):
+        self.num_params = num_params
+        self.c1 = c1
+        self.c2 = c2
+        self.w = w
+        self.popsize = popsize
+        self.sigma = sigma
+        self.weight_decay = weight_decay
+        self.pbest_params = np.zeros((self.popsize, self.num_params))
+        self.pbest_rewards = np.zeros(self.popsize)
+        self.best_params = np.zeros(self.num_params)
+        self.best_reward = 0
+        self.pop_params = np.zeros((self.popsize, self.num_params))
+        self.pop_vel = np.random.randn(self.popsize, self.num_params) * self.sigma
+        self.pop_rewards = np.zeros(self.popsize)
+        self.gbest_params = self.pop_params[np.argmax(self.pop_rewards)]
+        self.gbest_reward = np.max(self.pop_rewards)
+
+    def ask(self):
+        '''returns a list of parameters'''
+        solutions = []
+
+        for i in range(self.popsize):
+            self.pop_vel[i] = self.w * self.pop_vel[i] + \
+                                self.c1 * np.random.uniform() * \
+                                (self.pbest_params[i] - self.pop_params[i]) + \
+                                self.c2 * np.random.uniform() * \
+                                (self.gbest_params - self.pop_params[i])
+            self.pop_params[i] += self.pop_vel[i]
+            solutions.append(self.pop_params[i])
+        solutions = np.array(solutions)
+        self.solutions = solutions
+        return solutions
+
+    def tell(self, reward_table_result):
+        # input must be a numpy float array
+        assert(len(reward_table_result) == self.popsize), "Inconsistent reward_table size reported."
+
+        reward_table = np.array(reward_table_result)
+
+        if self.weight_decay > 0:
+          l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
+          reward_table += l2_decay
+
+        reward = np.concatenate([reward_table, self.pop_rewards])
+        solution = np.concatenate([self.solutions, self.pop_params])
+
+        self.pop_rewards = reward
+        self.curr_best_reward = np.max(self.pop_rewards)
+
+        for i in range(self.popsize):
+            if self.pop_rewards[i] > self.pbest_rewards[i]:
+                self.pbest_rewards[i] = self.pop_rewards[i]
+                self.pbest_params[i] = np.copy(self.pop_params[i])
+
+        if (self.curr_best_reward > self.best_reward):
+            self.best_reward = np.max(self.pop_rewards)
+            self.best_params = np.copy(self.pop_params[np.argmax(self.pop_rewards)])
+            self.gbest_reward = self.best_reward
+            self.gbest_params = self.best_params
+
 class SimpleGA:
   '''Simple Genetic Algorithm.'''
   def __init__(self, num_params,      # number of model parameters
@@ -168,13 +237,13 @@ class SimpleGA:
     '''returns a list of parameters'''
     self.epsilon = np.random.randn(self.popsize, self.num_params) * self.sigma
     solutions = []
-    
+
     def mate(a, b):
       c = np.copy(a)
       idx = np.where(np.random.rand((c.size)) > 0.5)
       c[idx] = b[idx]
       return c
-    
+
     elite_range = range(self.elite_popsize)
     for i in range(self.popsize):
       idx_a = np.random.choice(elite_range)
@@ -192,7 +261,7 @@ class SimpleGA:
     assert(len(reward_table_result) == self.popsize), "Inconsistent reward_table size reported."
 
     reward_table = np.array(reward_table_result)
-    
+
     if self.weight_decay > 0:
       l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
       reward_table += l2_decay
@@ -210,7 +279,7 @@ class SimpleGA:
     self.elite_params = solution[idx]
 
     self.curr_best_reward = self.elite_rewards[0]
-    
+
     if self.first_iteration or (self.curr_best_reward > self.best_reward):
       self.first_iteration = False
       self.best_reward = self.elite_rewards[0]
@@ -293,12 +362,12 @@ class OpenES:
   def tell(self, reward_table_result):
     # input must be a numpy float array
     assert(len(reward_table_result) == self.popsize), "Inconsistent reward_table size reported."
-    
+
     reward = np.array(reward_table_result)
-    
+
     if self.rank_fitness:
       reward = compute_centered_ranks(reward)
-    
+
     if self.weight_decay > 0:
       l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
       reward += l2_decay
@@ -324,7 +393,7 @@ class OpenES:
     # standardize the rewards to have a gaussian distribution
     normalized_reward = (reward - np.mean(reward)) / np.std(reward)
     change_mu = 1./(self.popsize*self.sigma)*np.dot(self.epsilon.T, normalized_reward)
-    
+
     #self.mu += self.learning_rate * change_mu
 
     self.optimizer.stepsize = self.learning_rate
@@ -430,10 +499,10 @@ class PEPG:
     assert(len(reward_table_result) == self.popsize), "Inconsistent reward_table size reported."
 
     reward_table = np.array(reward_table_result)
-    
+
     if self.rank_fitness:
       reward_table = compute_centered_ranks(reward_table)
-    
+
     if self.weight_decay > 0:
       l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
       reward_table += l2_decay
@@ -444,7 +513,7 @@ class PEPG:
       reward_offset = 0
     else:
       b = reward_table[0] # baseline
-      
+
     reward = reward_table[reward_offset:]
     if self.use_elite:
       idx = np.argsort(reward)[::-1][0:self.elite_popsize]
@@ -508,7 +577,7 @@ class PEPG:
 
     if (self.sigma_decay < 1):
       self.sigma[self.sigma > self.sigma_limit] *= self.sigma_decay
-    
+
     if (self.learning_rate_decay < 1 and self.learning_rate > self.learning_rate_limit):
       self.learning_rate *= self.learning_rate_decay
 
@@ -517,7 +586,7 @@ class PEPG:
 
   def set_mu(self, mu):
     self.mu = np.array(mu)
-  
+
   def best_param(self):
     return self.best_mu
 
