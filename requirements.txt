@@ -1,0 +1,7 @@
+gym==0.9.4
+mpi4py
+numpy==1.13.3
+cma
+pybullet==1.6.3
+box2d-py
+roboschool 
