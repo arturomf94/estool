@@ -149,13 +149,14 @@ class PSO:
         self.weight_decay = weight_decay
         self.pbest_params = np.zeros((self.popsize, self.num_params))
         self.pbest_rewards = np.zeros(self.popsize)
-        self.best_params = np.zeros(self.num_params)
+        self.best_param = np.zeros(self.num_params)
         self.best_reward = 0
-        self.pop_params = np.zeros((self.popsize, self.num_params))
-        self.pop_vel = np.random.randn(self.popsize, self.num_params) * self.sigma
+        self.pop_params = np.random.randn(self.popsize, self.num_params) * self.sigma
+        self.pop_vel = np.zeros((self.popsize, self.num_params))
         self.pop_rewards = np.zeros(self.popsize)
-        self.gbest_params = self.pop_params[np.argmax(self.pop_rewards)]
+        self.gbest_param = self.pop_params[np.argmax(self.pop_rewards)]
         self.gbest_reward = np.max(self.pop_rewards)
+        self.first_iteration = True
 
     def ask(self):
         '''returns a list of parameters'''
@@ -163,10 +164,10 @@ class PSO:
 
         for i in range(self.popsize):
             self.pop_vel[i] = self.w * self.pop_vel[i] + \
-                                self.c1 * np.random.uniform() * \
+                                self.c1 * np.random.uniform(0, 1, self.num_params) * \
                                 (self.pbest_params[i] - self.pop_params[i]) + \
-                                self.c2 * np.random.uniform() * \
-                                (self.gbest_params - self.pop_params[i])
+                                self.c2 * np.random.uniform(0, 1, self.num_params) * \
+                                (self.gbest_param - self.pop_params[i])
             self.pop_params[i] += self.pop_vel[i]
             solutions.append(self.pop_params[i])
         solutions = np.array(solutions)
@@ -183,22 +184,37 @@ class PSO:
           l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
           reward_table += l2_decay
 
-        reward = np.concatenate([reward_table, self.pop_rewards])
-        solution = np.concatenate([self.solutions, self.pop_params])
+        if self.first_iteration:
+            reward = reward_table
+            solution = self.solutions
+        else:
+            reward = np.concatenate([reward_table, self.pop_rewards])
+            solution = np.concatenate([self.solutions, self.pop_params])
 
         self.pop_rewards = reward
         self.curr_best_reward = np.max(self.pop_rewards)
 
         for i in range(self.popsize):
-            if self.pop_rewards[i] > self.pbest_rewards[i]:
+            if self.first_iteration or (self.pop_rewards[i] > self.pbest_rewards[i]):
                 self.pbest_rewards[i] = self.pop_rewards[i]
                 self.pbest_params[i] = np.copy(self.pop_params[i])
 
-        if (self.curr_best_reward > self.best_reward):
+        if self.first_iteration or (self.curr_best_reward > self.best_reward):
+            self.first_iteration = False
             self.best_reward = np.max(self.pop_rewards)
-            self.best_params = np.copy(self.pop_params[np.argmax(self.pop_rewards)])
+            self.best_param = np.copy(self.pop_params[np.argmax(self.pop_rewards)])
             self.gbest_reward = self.best_reward
-            self.gbest_params = self.best_params
+            self.gbest_param = self.best_param
+
+    def best_param(self):
+        return self.best_param
+
+    def current_param(self):
+        return np.copy(self.pop_params[np.argmax(self.pop_rewards)])
+
+    def result(self): # return best params so far, along with historically best reward, curr reward, sigma
+        return (self.best_param, self.best_reward, self.curr_best_reward, self.sigma)
+
 
 class SimpleGA:
   '''Simple Genetic Algorithm.'''
