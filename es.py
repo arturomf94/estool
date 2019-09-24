@@ -216,7 +216,7 @@ class PSO:
         return np.copy(self.pop_params[np.argmax(self.pop_rewards)])
 
     def result(self): # return best params so far, along with historically best reward, curr reward, sigma_init
-        return (self.best_param, self.best_reward, self.curr_best_reward, self.sigma)
+        return (self.best_param, self.best_reward, self.curr_best_reward, self.sigma_init)
 
 class PSO_CMA_ES:
     ''' Particle Swarm Optimisation with CMA-ES'''
@@ -366,15 +366,15 @@ class modified_PSO:
                  c2 = np.random.uniform(),
                  w = np.random.uniform(),
                  popsize = 256,
-                 sigma = 0.1,
+                 sigma_init = 0.1,
                  weight_decay = 0.01):
         self.num_params = num_params
         self.c1 = c1
         self.c2 = c2
         self.w = w
         self.popsize = popsize
-        self.sigma = sigma
-        self.epsilon = np.random.randn(self.popsize, self.num_params) * self.sigma
+        self.sigma_init = sigma_init
+        self.epsilon = np.random.randn(self.popsize, self.num_params) * self.sigma_init
         self.weight_decay = weight_decay
         self.best_param = np.zeros(self.num_params)
         self.best_reward = 0
@@ -438,7 +438,7 @@ class modified_PSO:
             self.gbest_reward = self.best_reward
             self.gbest_param = self.best_param
 
-        if self.first_iteration == False and np.std(reward_table_result) < self.sigma:
+        if self.first_iteration == False and np.std(reward_table_result) < self.sigma_init:
             self.first_iteration = True
             print('NEW!')
             max_id = np.argmax(reward_table_result)
@@ -446,7 +446,7 @@ class modified_PSO:
                 if i != max_id:
                     self.pop_params[i] = self.pop_params[max_id] + \
                                         np.random.uniform(0,1,self.num_params) * \
-                                        self.sigma
+                                        self.sigma_init
 
 
     def best_param(self):
@@ -456,7 +456,7 @@ class modified_PSO:
         return np.copy(self.pop_params[np.argmax(self.pop_rewards)])
 
     def result(self): # return best params so far, along with historically best reward, curr reward, sigma_init
-        return (self.best_param, self.best_reward, self.curr_best_reward, self.sigma)
+        return (self.best_param, self.best_reward, self.curr_best_reward, self.sigma_init)
 
 
 
