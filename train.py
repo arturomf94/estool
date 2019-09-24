@@ -20,7 +20,7 @@ import subprocess
 import sys
 import config
 from model import make_model, simulate
-from es import CMAES, SimpleGA, OpenES, PEPG
+from es import SimpleGA, CMAES, PEPG, OpenES, PSO, modified_PSO, PSO_CMA_ES, local_PSO
 import argparse
 import time
 
@@ -37,7 +37,7 @@ num_worker_trial = 16
 population = num_worker * num_worker_trial
 
 gamename = 'invalid_gamename'
-optimizer = 'pepg'
+optimizer = 'pso_cma_es'
 antithetic = True
 batch_mode = 'mean'
 
@@ -107,6 +107,15 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
       weight_decay=0.005,
       popsize=population)
     es = pepg
+  elif optimizer == 'pso_cma_es':
+    pso_cma_es = PSO_CMA_ES(num_params,
+      sigma_init = sigma_init,
+      c1 = 0.5,
+      c2 = 0.5,
+      w = 0.9,
+      popsize = population,
+      weight_decay=0.005,
+      min_pop_std = 0.6)
   else:
     oes = OpenES(num_params,
       sigma_init=sigma_init,

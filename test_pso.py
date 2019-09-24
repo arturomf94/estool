@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cma
-from es import SimpleGA, CMAES, PEPG, OpenES, PSO, modified_PSO, PSO_CMA_ES
+from es import SimpleGA, CMAES, PEPG, OpenES, PSO, modified_PSO, PSO_CMA_ES, local_PSO
 
 def rastrigin(x):
   """Rastrigin test objective function, shifted by 10. units away from origin"""
@@ -45,23 +45,44 @@ x = np.ones(NPARAMS)*10. # 100-dimensional problem
 print(rastrigin(x))
 print("global optimum point:\n", x)
 
-pso_cma_es = PSO_CMA_ES(NPARAMS,
-                        c1 = 0.1,
-                        c2 = 0.9,
-                        w = 0.9,
-                        popsize = NPOPULATION,
-                        sigma_init = 0.5,
-                        weight_decay = 0.00,
-                        min_pop_std = 0.75)
-
-pso_cma_es_history = test_solver(pso_cma_es)
-
-# ga = SimpleGA(NPARAMS,                # number of model parameters
-#                sigma_init=0.5,        # initial standard deviation
-#                popsize=NPOPULATION,   # population size
-#                elite_ratio=0.1,       # percentage of the elites
-#                forget_best=False,     # forget the historical best elites
-#                weight_decay=0.00,     # weight decay coefficient
-#               )
+# pso_cma_es = PSO_CMA_ES(NPARAMS,
+#                         c1 = 0.5,
+#                         c2 = 0.5,
+#                         w = 0.9,
+#                         popsize = NPOPULATION,
+#                         sigma_init = 0.5,
+#                         weight_decay = 0.00,
+#                         min_pop_std = 0.75)
 #
-# ga_history = test_solver(ga)
+# pso_cma_es_history = test_solver(pso_cma_es)
+
+# pso = PSO(NPARAMS,
+#          c1 = 0.5,
+#          c2 = 0.5,
+#          w = 0.9,
+#          popsize = NPOPULATION,
+#          sigma_init = 0.5,
+#          weight_decay = 0.00)
+#
+# pso_history = test_solver(pso)
+
+local_pso = local_PSO(NPARAMS,
+                c1 = 0.3,
+                c2 = 0.1,
+                w = 0.9,
+                popsize = NPOPULATION,
+                sigma_init = 0.9,
+                weight_decay = 0.00,
+                neighbours = 3)
+
+local_pso_history = test_solver(local_pso)
+
+# m_pso = modified_PSO(NPARAMS,
+#          c1 = 0.5,
+#          c2 = 0.5,
+#          w = 0.9,
+#          popsize = NPOPULATION,
+#          sigma_init = 0.5,
+#          weight_decay = 0.00)
+#
+# m_pso_history = test_solver(m_pso)

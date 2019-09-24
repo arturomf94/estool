@@ -195,28 +195,140 @@ class PSO:
             solution = np.concatenate([self.solutions, self.pop_params])
 
         self.pop_rewards = reward
-        self.curr_best_reward = np.max(self.pop_rewards)
+        self.curr_best_reward = np.max(reward_table)
 
         for i in range(self.popsize):
             if self.first_iteration or (self.pop_rewards[i] > self.pbest_rewards[i]):
                 self.pbest_rewards[i] = self.pop_rewards[i]
                 self.pbest_params[i] = np.copy(self.pop_params[i])
 
+        self.gbest_reward = np.max(reward_table)
+        self.gbest_param = np.copy(self.pop_params[np.argmax(reward_table)])
+
         if self.first_iteration or (self.curr_best_reward > self.best_reward):
             self.first_iteration = False
-            self.best_reward = np.max(self.pop_rewards)
-            self.best_param = np.copy(self.pop_params[np.argmax(self.pop_rewards)])
-            self.gbest_reward = self.best_reward
-            self.gbest_param = self.best_param
+            self.best_reward = np.max(reward_table)
+            self.best_param = np.copy(self.pop_params[np.argmax(reward_table)])
 
     def best_param(self):
         return self.best_param
 
     def current_param(self):
-        return np.copy(self.pop_params[np.argmax(self.pop_rewards)])
+        return np.copy(self.pop_params[np.argmax(reward_table)])
 
     def result(self): # return best params so far, along with historically best reward, curr reward, sigma_init
         return (self.best_param, self.best_reward, self.curr_best_reward, self.sigma_init)
+
+class local_PSO:
+    ''' Standard Particle Swarm Optimisation '''
+    def __init__(self, num_params,
+                 c1 = np.random.uniform(),
+                 c2 = np.random.uniform(),
+                 w = np.random.uniform(),
+                 popsize = 256,
+                 sigma_init = 0.1,
+                 weight_decay = 0.01,
+                 neighbours = 2):
+        self.num_params = num_params
+        self.c1 = c1
+        self.c2 = c2
+        self.w = w
+        self.popsize = popsize
+        self.sigma_init = sigma_init
+        self.weight_decay = weight_decay
+        self.best_param = np.zeros(self.num_params)
+        self.best_reward = 0
+        self.pop_params = np.random.randn(self.popsize, self.num_params) * self.sigma_init
+        self.pbest_params = self.pop_params
+        self.pbest_rewards = np.zeros(self.popsize)
+        self.pop_vel = np.zeros((self.popsize, self.num_params))
+        self.pop_rewards = np.zeros(self.popsize)
+        self.gbest_param = np.copy(self.pop_params)
+        self.gbest_reward = np.zeros(self.popsize)
+        self.first_iteration = True
+        self.neighbours = neighbours
+        if self.neighbours > self.popsize - 1:
+            raise ValueError('Make sure neighbours are between 1 and ' + str(self.popsize - 1))
+
+    def ask(self):
+        '''returns a list of parameters'''
+        solutions = []
+        if self.first_iteration:
+            self.solutions = solutions
+            return self.pop_params
+
+        for i in range(self.popsize):
+            self.pop_vel[i] = self.w * self.pop_vel[i] + \
+                                self.c1 * np.random.uniform(0, 1, self.num_params) * \
+                                (self.pbest_params[i] - self.pop_params[i]) + \
+                                self.c2 * np.random.uniform(0, 1, self.num_params) * \
+                                (self.gbest_param[i] - self.pop_params[i])
+            self.pop_params[i] += self.pop_vel[i]
+            solutions.append(self.pop_params[i])
+        solutions = np.array(solutions)
+        self.solutions = solutions
+        return solutions
+
+    def tell(self, reward_table_result):
+        # input must be a numpy float array
+        assert(len(reward_table_result) == self.popsize), "Inconsistent reward_table size reported."
+
+        reward_table = np.array(reward_table_result)
+
+        if self.weight_decay > 0:
+          l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
+          reward_table += l2_decay
+
+        if self.first_iteration:
+            reward = reward_table
+            solution = self.solutions
+        else:
+            reward = np.concatenate([reward_table, self.pop_rewards])
+            solution = np.concatenate([self.solutions, self.pop_params])
+
+        self.pop_rewards = reward
+        self.curr_best_reward = np.max(reward_table)
+
+        for i in range(self.popsize):
+            left_id, right_id = self.find_neighbourhood(i)
+            reward_table_id = left_id + np.argmax(reward_table[left_id : right_id])
+            self.gbest_reward[i] = reward_table[reward_table_id]
+            self.gbest_param[i] = np.copy(self.pop_params[reward_table_id])
+            if self.first_iteration or (self.pop_rewards[i] > self.pbest_rewards[i]):
+                self.pbest_rewards[i] = self.pop_rewards[i]
+                self.pbest_params[i] = np.copy(self.pop_params[i])
+
+
+        if self.first_iteration or (self.curr_best_reward > self.best_reward):
+            self.first_iteration = False
+            self.best_reward = np.max(reward_table)
+            self.best_param = np.copy(self.pop_params[np.argmax(reward_table)])
+
+    def find_neighbourhood(self, index):
+        left_id = index
+        right_id = index + 1
+        for i in range(self.neighbours):
+            if i % 2 == 0:
+                if left_id > 0:
+                    left_id -= 1
+                else:
+                    right_id += 1
+            else:
+                if right_id < self.popsize - 1:
+                    right_id += 1
+                else:
+                    left_id -= 1
+        return (left_id, right_id)
+
+    def best_param(self):
+        return self.best_param
+
+    def current_param(self):
+        return np.copy(self.pop_params[np.argmax(reward_table)])
+
+    def result(self): # return best params so far, along with historically best reward, curr reward, sigma_init
+        return (self.best_param, self.best_reward, self.curr_best_reward, self.sigma_init)
+
 
 class PSO_CMA_ES:
     ''' Particle Swarm Optimisation with CMA-ES'''
@@ -319,13 +431,14 @@ class PSO_CMA_ES:
                     self.pbest_rewards[i] = self.pop_rewards[i]
                     self.pbest_params[i] = np.copy(self.pop_params[i])
 
+            self.gbest_reward = np.max(reward_table)
+            self.gbest_param = np.copy(self.pop_params[np.argmax(reward_table)])
+
+
             if (self.curr_best_reward > self.best_reward):
                 # self.first_iteration = False
-                self.best_reward = np.max(self.pop_rewards)
-                self.best_param = np.copy(self.pop_params[np.argmax(self.pop_rewards)])
-                self.gbest_reward = self.best_reward
-                self.gbest_param = self.best_param
-
+                self.best_reward = np.max(reward_table)
+                self.best_param = np.copy(self.pop_params[np.argmax(reward_table)])
         elif self.current_optimizer == 'es':
 
             reward_table = -np.array(reward_table_result)
@@ -340,7 +453,7 @@ class PSO_CMA_ES:
         if self.current_optimizer == 'es':
             return self.es.result[5] # mean solution, presumably better with noise
         else:
-            return np.copy(self.pop_params[np.argmax(self.pop_rewards)])
+            return np.copy(self.pop_params[np.argmax(reward_table)])
 
     def set_mu(self, mu):
         pass
@@ -424,19 +537,20 @@ class modified_PSO:
             solution = np.concatenate([self.solutions, self.pop_params])
 
         self.pop_rewards = reward
-        self.curr_best_reward = np.max(self.pop_rewards)
+        self.curr_best_reward = np.max(reward_table)
 
         for i in range(self.popsize):
             if self.first_iteration or (self.pop_rewards[i] > self.pbest_rewards[i]):
                 self.pbest_rewards[i] = self.pop_rewards[i]
                 self.pbest_params[i] = np.copy(self.pop_params[i])
 
+        self.gbest_reward = np.max(reward_table)
+        self.gbest_param = np.copy(self.pop_params[np.argmax(reward_table)])
+
         if self.first_iteration or (self.curr_best_reward > self.best_reward):
             self.first_iteration = False
-            self.best_reward = np.max(self.pop_rewards)
-            self.best_param = np.copy(self.pop_params[np.argmax(self.pop_rewards)])
-            self.gbest_reward = self.best_reward
-            self.gbest_param = self.best_param
+            self.best_reward = np.max(reward_table)
+            self.best_param = np.copy(self.pop_params[np.argmax(reward_table)])
 
         if self.first_iteration == False and np.std(reward_table_result) < self.sigma_init:
             self.first_iteration = True
@@ -453,7 +567,7 @@ class modified_PSO:
         return self.best_param
 
     def current_param(self):
-        return np.copy(self.pop_params[np.argmax(self.pop_rewards)])
+        return np.copy(self.pop_params[np.argmax(reward_table)])
 
     def result(self): # return best params so far, along with historically best reward, curr reward, sigma_init
         return (self.best_param, self.best_reward, self.curr_best_reward, self.sigma_init)
