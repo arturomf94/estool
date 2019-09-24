@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cma
-from es import SimpleGA, CMAES, PEPG, OpenES, PSO
+from es import SimpleGA, CMAES, PEPG, OpenES, PSO, modified_PSO, PSO_CMA_ES
 
 def rastrigin(x):
   """Rastrigin test objective function, shifted by 10. units away from origin"""
@@ -17,7 +17,7 @@ fit_func = rastrigin
 
 NPARAMS = 100        # make this a 100-dimensinal problem.
 NPOPULATION = 101    # use population size of 101.
-MAX_ITERATION = 4000 # run each solver for 5000 generations.
+MAX_ITERATION = 5000 # run each solver for 5000 generations.
 
 # defines a function to use solver to solve fit_func
 def test_solver(solver):
@@ -31,10 +31,12 @@ def test_solver(solver):
     result = solver.result() # first element is the best solution, second element is the best fitness
     history.append(result[1])
     if (j+1) % 100 == 0:
+      print(solver.pop_std)
       print("fitness at iteration", (j+1), result[1])
   print("local optimum discovered by solver:\n", result[0])
   print("fitness score at this local optimum:", result[1])
   return history
+
 
 x = np.zeros(NPARAMS) # 100-dimensional problem
 print("This is F(0):")
@@ -44,15 +46,16 @@ x = np.ones(NPARAMS)*10. # 100-dimensional problem
 print(rastrigin(x))
 print("global optimum point:\n", x)
 
-pso = PSO(NPARAMS,
-         c1 = 0,
-         c2 = 0.99,
-         w = 0.9,
-         popsize = NPOPULATION,
-         sigma = 0.5,
-         weight_decay = 0.00)
+pso_cma_es = PSO_CMA_ES(NPARAMS,
+                        c1 = 0.1,
+                        c2 = 0.9,
+                        w = 0.9,
+                        popsize = NPOPULATION,
+                        sigma_init = 0.5,
+                        weight_decay = 0.00,
+                        min_pop_std = 0.75)
 
-pso_history = test_solver(pso)
+pso_cma_es_history = test_solver(pso_cma_es)
 
 # ga = SimpleGA(NPARAMS,                # number of model parameters
 #                sigma_init=0.5,        # initial standard deviation
