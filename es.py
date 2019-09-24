@@ -296,52 +296,6 @@ class PSO_CMA_ES:
             self.pop_std = np.std(self.solutions)
             return self.solutions
 
-        # if self.remaining_iters == 0:
-        #     if self.current_optimizer == 'pso':
-        #         print('ES!')
-        #         self.current_optimizer = 'es'
-        #         self.remaining_iters = self.es_iters
-        #         import cma
-        #         self.es = cma.CMAEvolutionStrategy(self.gbest_param,
-        #                                             self.sigma_init,
-        #                                             {'popsize': self.popsize,
-        #                                             })
-        #         self.solutions = np.array(self.es.ask())
-        #         return self.solutions
-        #     else:
-        #         print('PSO!')
-        #         r = self.es.result
-        #         self.current_optimizer = 'pso'
-        #         self.remaining_iters = self.pso_iters
-        #         self.pop_params = np.copy(self.solutions)
-        #         self.pop_vel = np.zeros((self.popsize, self.num_params))
-        #         # self.pop_rewards = np.zeros(self.popsize)
-        #         self.best_param = r[0]
-        #         self.best_reward = -r[1]
-        #         self.pbest_params = np.copy(self.pop_params)
-        #         self.pbest_rewards = np.copy(self.pop_rewards)
-        #         self.gbest_param = r[0]
-        #         self.gbest_reward = -r[1]
-        #         # self.first_iteration = True
-        #         # import pdb; pdb.set_trace()
-        #         return self.pop_params
-        # if self.remaining_iters > 0 and self.current_optimizer == 'pso':
-        #     solutions = []
-        #     for i in range(self.popsize):
-        #         self.pop_vel[i] = self.w * self.pop_vel[i] + \
-        #                             self.c1 * np.random.uniform(0, 1, self.num_params) * \
-        #                             (self.pbest_params[i] - self.pop_params[i]) + \
-        #                             self.c2 * np.random.uniform(0, 1, self.num_params) * \
-        #                             (self.gbest_param - self.pop_params[i])
-        #         self.pop_params[i] += self.pop_vel[i]
-        #         solutions.append(self.pop_params[i])
-        #     solutions = np.array(solutions)
-        #     self.solutions = solutions
-        #     return self.solutions
-        # elif self.remaining_iters > 0 and self.current_optimizer == 'es':
-        #     self.solutions = np.array(self.es.ask())
-        #     return self.solutions
-
     def tell(self, reward_table_result):
         # input must be a numpy float array
         if self.current_optimizer == 'pso':
@@ -354,10 +308,6 @@ class PSO_CMA_ES:
               l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
               reward_table += l2_decay
 
-            # if self.first_iteration:
-            #     reward = reward_table
-            #     solution = self.solutions
-            # else:
             reward = np.concatenate([reward_table, self.pop_rewards])
             solution = np.concatenate([self.solutions, self.pop_params])
 
