@@ -31,7 +31,6 @@ def test_solver(solver):
     result = solver.result() # first element is the best solution, second element is the best fitness
     history.append(result[1])
     if (j+1) % 100 == 0:
-      print(solver.pop_std)
       print("fitness at iteration", (j+1), result[1])
   print("local optimum discovered by solver:\n", result[0])
   print("fitness score at this local optimum:", result[1])
