@@ -381,8 +381,8 @@ class PSO_CMA_ES:
     def ask(self):
         self.calls += 1
         '''returns a list of parameters'''
-        if np.random.uniform() < .3:
-            print(self.pop_std)
+        # if np.random.uniform() < .3:
+        #     print(self.pop_std)
         if self.pop_std < self.min_pop_std and self.calls > self.slack_calls:
             if self.first_pso_iter == True:
                 self.first_pso_iter = False
@@ -448,6 +448,171 @@ class PSO_CMA_ES:
                 # self.first_iteration = False
                 self.best_reward = np.max(reward_table)
                 self.best_param = np.copy(self.pop_params[np.argmax(reward_table)])
+        elif self.current_optimizer == 'es':
+
+            reward_table = -np.array(reward_table_result)
+            if self.weight_decay > 0:
+              l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
+              reward_table += l2_decay
+            self.pop_rewards =  np.array(reward_table_result)
+            self.es.tell(self.solutions, (reward_table).tolist()) # convert minimizer to maximizer.
+
+    def rms_stdev(self):
+        if self.current_optimizer == 'es':
+            sigma = self.es.result[6]
+            return np.mean(np.sqrt(sigma*sigma))
+        else:
+            return self.sigma_init # same sigma for all parameters.
+
+
+    def current_param(self):
+        if self.current_optimizer == 'es':
+            return self.es.result[5] # mean solution, presumably better with noise
+        else:
+            return self.gbest_param
+
+    def set_mu(self, mu):
+        pass
+
+    def best_param(self):
+        if self.current_optimizer == 'es':
+            return self.es.result[0] # best evaluated solution
+        else:
+            return self.best_param
+
+    def result(self): # return best params so far, along with historically best reward, curr reward, sigma
+        if self.current_optimizer == 'es':
+            r = self.es.result
+            return (r[0], -r[1], -r[1], r[6])
+        else:
+            return (self.best_param, self.best_reward, self.curr_best_reward, self.sigma_init)
+
+class PSO_CMA_ES2:
+    ''' Particle Swarm Optimisation with CMA-ES'''
+    def __init__(self,
+                 num_params,
+                 c1 = np.random.uniform(),
+                 c2 = np.random.uniform(),
+                 w = np.random.uniform(),
+                 popsize = 256,
+                 sigma_init = 0.1,
+                 weight_decay = 0.01,
+                 min_pop_std = 2,
+                 slack_calls = 10):
+        self.num_params = num_params
+        self.c1 = c1
+        self.c2 = c2
+        self.w = w
+        self.popsize = popsize
+        self.sigma_init = sigma_init
+        self.weight_decay = weight_decay
+        self.best_param = np.zeros(self.num_params)
+        self.best_reward = 0
+        self.pop_params = np.random.randn(self.popsize, self.num_params) * self.sigma_init
+        self.pbest_params = self.pop_params
+        self.pbest_rewards = np.zeros(self.popsize)
+        self.pop_vel = np.zeros((self.popsize, self.num_params))
+        self.pop_rewards = np.zeros(self.popsize)
+        self.gbest_param = self.pop_params[np.argmax(self.pop_rewards)]
+        self.gbest_reward = np.max(self.pop_rewards)
+        self.first_pso_iter = True
+        self.current_optimizer = 'es'
+        self.min_pop_std = min_pop_std
+        self.pop_std = self.min_pop_std
+        self.calls = 0
+        self.slack_calls = slack_calls
+        self.diversity_tolerance = 0.001
+        # CMA-ES
+        print('ES!')
+        import cma
+        self.es = cma.CMAEvolutionStrategy(self.num_params * [0],
+                                            self.sigma_init,
+                                            {'popsize': self.popsize,
+                                            })
+
+    def ask(self):
+        self.calls += 1
+        '''returns a list of parameters'''
+        # if np.random.uniform() < .3:
+        #     print(self.pop_std)
+        if self.pop_std < self.min_pop_std and self.calls > self.slack_calls:
+            if self.first_pso_iter == True:
+                self.first_pso_iter = False
+                print('PSO!')
+                r = self.es.result
+                self.current_optimizer = 'pso'
+                self.pop_params = np.copy(self.solutions)
+                self.pop_vel = np.zeros((self.popsize, self.num_params))
+                self.best_param = r[0]
+                self.best_reward = -r[1]
+                self.pbest_params = np.copy(self.pop_params)
+                self.pbest_rewards = np.copy(self.pop_rewards)
+                self.gbest_param = r[0]
+                self.gbest_reward = -r[1]
+                return self.pop_params
+            else:
+                solutions = []
+                for i in range(self.popsize):
+                    self.pop_vel[i] = self.w * self.pop_vel[i] + \
+                                        self.c1 * np.random.uniform(0, 1, self.num_params) * \
+                                        (self.pbest_params[i] - self.pop_params[i]) + \
+                                        self.c2 * np.random.uniform(0, 1, self.num_params) * \
+                                        (self.gbest_param - self.pop_params[i])
+                    self.pop_params[i] += self.pop_vel[i]
+                    solutions.append(self.pop_params[i])
+                solutions = np.array(solutions)
+                self.solutions = solutions
+                return self.solutions
+        else:
+            self.solutions = np.array(self.es.ask())
+            # self.pop_std = np.std(self.solutions)
+            self.pop_std = self.rms_stdev()
+            return self.solutions
+
+    def tell(self, reward_table_result):
+        # input must be a numpy float array
+        if self.current_optimizer == 'pso':
+
+            assert(len(reward_table_result) == self.popsize), "Inconsistent reward_table size reported."
+
+            reward_table = np.array(reward_table_result)
+
+            if self.weight_decay > 0:
+              l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
+              reward_table += l2_decay
+
+            reward = np.concatenate([reward_table, self.pop_rewards])
+            solution = np.concatenate([self.solutions, self.pop_params])
+
+            self.pop_rewards = reward
+            self.curr_best_reward = np.max(self.pop_rewards)
+
+            for i in range(self.popsize):
+                if (self.pop_rewards[i] > self.pbest_rewards[i]):
+                    self.pbest_rewards[i] = self.pop_rewards[i]
+                    self.pbest_params[i] = np.copy(self.pop_params[i])
+
+            self.gbest_reward = np.max(reward_table)
+            self.gbest_param = np.copy(self.pop_params[np.argmax(reward_table)])
+
+            if (self.curr_best_reward > self.best_reward):
+                # self.first_iteration = False
+                self.best_reward = np.max(reward_table)
+                self.best_param = np.copy(self.pop_params[np.argmax(reward_table)])
+
+            if np.std(reward_table_result) < self.diversity_tolerance:
+                        self.diversity_tolerance = self.diversity_tolerance / 2
+                        self.first_iteration = True
+                        print('NEW!')
+                        max_id = np.argmax(reward_table_result)
+                        for i in range(self.popsize):
+                            if i != max_id:
+                                self.pop_params[i] = self.pop_params[max_id] + \
+                                                    np.random.uniform(0, 1, self.num_params) * \
+                                                    self.sigma_init
+                                self.pop_vel[i] = np.zeros(self.num_params)
+                                self.pbest_params[i] = np.copy(self.pop_params[i])
+                                self.pbest_rewards[i] = 0
         elif self.current_optimizer == 'es':
 
             reward_table = -np.array(reward_table_result)
