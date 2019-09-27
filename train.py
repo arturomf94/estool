@@ -112,10 +112,11 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
       sigma_init = sigma_init,
       c1 = 0.5,
       c2 = 0.5,
-      w = 0.9,
+      w = 0.7,
       popsize = population,
       weight_decay=0.005,
-      min_pop_std = 0.6)
+      min_pop_std = 0.085)
+    es = pso_cma_es
   else:
     oes = OpenES(num_params,
       sigma_init=sigma_init,
@@ -433,7 +434,7 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser(description=('Train policy on OpenAI Gym environment '
                                                 'using pepg, ses, openes, ga, cma'))
   parser.add_argument('gamename', type=str, help='robo_pendulum, robo_ant, robo_humanoid, etc.')
-  parser.add_argument('-o', '--optimizer', type=str, help='ses, pepg, openes, ga, cma.', default='cma')
+  parser.add_argument('-o', '--optimizer', type=str, help='ses, pepg, openes, ga, cma.', default='pso_cma_es')
   parser.add_argument('-e', '--num_episode', type=int, default=1, help='num episodes per trial')
   parser.add_argument('--eval_steps', type=int, default=25, help='evaluate every eval_steps step')
   parser.add_argument('-n', '--num_worker', type=int, default=8)

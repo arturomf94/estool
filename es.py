@@ -1,4 +1,5 @@
 import numpy as np
+import nevergrad as ng
 
 def compute_ranks(x):
   """
@@ -210,11 +211,14 @@ class PSO:
             self.best_reward = np.max(reward_table)
             self.best_param = np.copy(self.pop_params[np.argmax(reward_table)])
 
+    def rms_stdev(self):
+        return self.sigma_init # same sigma for all parameters.
+
     def best_param(self):
         return self.best_param
 
     def current_param(self):
-        return np.copy(self.pop_params[np.argmax(reward_table)])
+        return self.gbest_param
 
     def result(self): # return best params so far, along with historically best reward, curr reward, sigma_init
         return (self.best_param, self.best_reward, self.curr_best_reward, self.sigma_init)
@@ -320,11 +324,14 @@ class local_PSO:
                     left_id -= 1
         return (left_id, right_id)
 
+    def rms_stdev(self):
+        return self.sigma_init # same sigma for all parameters.
+
     def best_param(self):
         return self.best_param
 
     def current_param(self):
-        return np.copy(self.pop_params[np.argmax(reward_table)])
+        return self.gbest_param
 
     def result(self): # return best params so far, along with historically best reward, curr reward, sigma_init
         return (self.best_param, self.best_reward, self.curr_best_reward, self.sigma_init)
@@ -375,6 +382,8 @@ class PSO_CMA_ES:
     def ask(self):
         self.calls += 1
         '''returns a list of parameters'''
+        if np.random.uniform() < .3:
+            print(self.pop_std)
         if self.pop_std < self.min_pop_std and self.calls > self.slack_calls:
             if self.first_pso_iter == True:
                 self.first_pso_iter = False
@@ -405,7 +414,8 @@ class PSO_CMA_ES:
                 return self.solutions
         else:
             self.solutions = np.array(self.es.ask())
-            self.pop_std = np.std(self.solutions)
+            # self.pop_std = np.std(self.solutions)
+            self.pop_std = self.rms_stdev()
             return self.solutions
 
     def tell(self, reward_table_result):
@@ -448,12 +458,19 @@ class PSO_CMA_ES:
             self.pop_rewards =  np.array(reward_table_result)
             self.es.tell(self.solutions, (reward_table).tolist()) # convert minimizer to maximizer.
 
+    def rms_stdev(self):
+        if self.current_optimizer == 'es':
+            sigma = self.es.result[6]
+            return np.mean(np.sqrt(sigma*sigma))
+        else:
+            return self.sigma_init # same sigma for all parameters.
+
 
     def current_param(self):
         if self.current_optimizer == 'es':
             return self.es.result[5] # mean solution, presumably better with noise
         else:
-            return np.copy(self.pop_params[np.argmax(reward_table)])
+            return self.gbest_param
 
     def set_mu(self, mu):
         pass
@@ -562,12 +579,14 @@ class modified_PSO:
                                         np.random.uniform(0,1,self.num_params) * \
                                         self.sigma_init
 
+    def rms_stdev(self):
+        return self.sigma_init # same sigma for all parameters.
 
     def best_param(self):
         return self.best_param
 
     def current_param(self):
-        return np.copy(self.pop_params[np.argmax(reward_table)])
+        return self.gbest_param
 
     def result(self): # return best params so far, along with historically best reward, curr reward, sigma_init
         return (self.best_param, self.best_reward, self.curr_best_reward, self.sigma_init)
