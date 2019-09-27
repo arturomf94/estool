@@ -1,5 +1,4 @@
 import numpy as np
-import nevergrad as ng
 
 def compute_ranks(x):
   """
