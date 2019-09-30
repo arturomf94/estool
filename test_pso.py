@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cma
-from es import SimpleGA, CMAES, PEPG, OpenES, PSO, modified_PSO, PSO_CMA_ES, local_PSO, PSO_CMA_ES2
+from es import SimpleGA, CMAES, PEPG, OpenES, PSO, modified_PSO, PSO_CMA_ES, local_PSO, PSO_CMA_ES3
 
 def rastrigin(x):
   """Rastrigin test objective function, shifted by 10. units away from origin"""
@@ -52,9 +52,9 @@ print(fit_func(x))
 print("global optimum point:\n", x)
 
 pso_cma_es = PSO_CMA_ES(NPARAMS,
-                        c1 = 0.5,
-                        c2 = 0.5,
-                        w = 0.9,
+                        c1 = 0.001,
+                        c2 = 0.003,
+                        w = 0.001,
                         popsize = NPOPULATION,
                         sigma_init = 0.5,
                         weight_decay = 0.00,
@@ -62,16 +62,17 @@ pso_cma_es = PSO_CMA_ES(NPARAMS,
 
 pso_cma_es_history = test_solver(pso_cma_es)
 
-# pso_cma_es2 = PSO_CMA_ES2(NPARAMS,
-#                         c1 = 0.5,
-#                         c2 = 0.5,
-#                         w = 0.9,
+# pso_cma_es3 = PSO_CMA_ES3(NPARAMS,
+#                         c1 = 0.001,
+#                         c2 = 0.003,
+#                         w = 0.001,
 #                         popsize = NPOPULATION,
 #                         sigma_init = 0.5,
 #                         weight_decay = 0.00,
-#                         min_pop_std = 0.7)
+#                         min_pop_std = 0.3,
+#                         pso_sigma_init = 0.3)
 #
-# pso_cma_es2_history = test_solver(pso_cma_es2)
+# pso_cma_es3_history = test_solver(pso_cma_es3)
 
 #
 # pso = PSO(NPARAMS,
