@@ -539,7 +539,6 @@ class PSO_CMA_ES3:
         if self.pop_std < self.min_pop_std and self.calls > self.slack_calls:
             if self.first_pso_iter == True:
                 self.first_pso_iter = False
-                print('PSO!')
                 r = self.es.result
                 self.current_optimizer = 'pso'
                 self.pop_params = np.random.randn(self.popsize, self.num_params) * self.pso_sigma_init + r[0]
@@ -550,6 +549,7 @@ class PSO_CMA_ES3:
                 self.pbest_rewards = np.copy(self.pop_rewards)
                 self.gbest_param = r[0]
                 self.gbest_reward = -r[1]
+                import pdb; pdb.set_trace()
                 return self.pop_params
             else:
                 solutions = []
@@ -566,6 +566,7 @@ class PSO_CMA_ES3:
                 return self.solutions
         else:
             self.solutions = np.array(self.es.ask())
+            # import pdb; pdb.set_trace()
             # self.pop_std = np.std(self.solutions)
             self.pop_std = self.rms_stdev()
             return self.solutions
