@@ -388,3 +388,15 @@ robo_hopper = Game(env_name='RoboschoolHopper-v1',
   rnn_mode=False,
 )
 games['robo_hopper'] = robo_hopper
+
+maze = Game(env_name = 'maze-random-10x10-plus-v0',
+  input_size = 2,
+  output_size = 1,
+  time_factor=0,
+  layers=[25, 5],
+  activation='passthru',
+  noise_bias=0.0,
+  output_noise=[False, False, True],
+  rnn_mode=False,
+)
+games['maze'] = maze
