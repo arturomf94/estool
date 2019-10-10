@@ -23,7 +23,7 @@ def sphere(x):
 def deceptivemultimodal(x):
     """Infinitely many local optima, as we get closer to the optimum."""
     x = np.copy(x)
-    # x -= 10.0
+    x -= 10.0
     distance = np.sqrt(x[0] ** 2 + x[1] ** 2)
     if distance == 0.0:
         return 0.0

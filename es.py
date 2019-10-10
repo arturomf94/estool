@@ -135,7 +135,7 @@ class Nevergrad:
       fitness.append(value)
       self.op.tell(self.candidates[i], value)
     self.pop_rewards = np.asarray(fitness)
-    self.current_reward = np.min(self.pop_rewards)
+    self.current_reward = -np.min(self.pop_rewards)
     self.current_param = np.copy(self.solutions[np.argmin(self.pop_rewards)])
     self.best_param = self.op.provide_recommendation().args[0]
     if self.best_param in self.solutions:
