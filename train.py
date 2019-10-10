@@ -110,13 +110,32 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
   elif optimizer == 'pso_cma_es':
     pso_cma_es = PSO_CMA_ES(num_params,
       sigma_init = sigma_init,
-      c1 = 0.5,
-      c2 = 0.5,
-      w = 0.7,
+      c1 = 0.001,
+      c2 = 0.003,
+      w = 0.001,
       popsize = population,
       weight_decay=0.005,
-      min_pop_std = 0.085)
+      min_pop_std = 0.5)
     es = pso_cma_es
+  elif optimizer == 'pso':
+    pso = PSO(num_params,
+      sigma_init = sigma_init,
+      c1 = 0.001,
+      c2 = 0.003,
+      w = 0.001,
+      popsize = population,
+      weight_decay=0.005)
+    es = pso
+  elif optimizer == 'pso_local':
+    pso_local = local_PSO(num_params,
+      sigma_init = sigma_init,
+      c1 = 0.001,
+      c2 = 0.003,
+      w = 0.001,
+      popsize = population,
+      weight_decay=0.005,
+      neighbours = 2)
+    es = pso_local
   else:
     oes = OpenES(num_params,
       sigma_init=sigma_init,

@@ -83,6 +83,76 @@ class Adam(Optimizer):
     step = -a * self.m / (np.sqrt(self.v) + self.epsilon)
     return step
 
+class Nevergrad:
+  ''' Nevergrad wrapper.'''
+  def __init__(self,
+    optimizer,
+    num_params,
+    sigma_init = 0.1,
+    popsize = 255,
+    weight_decay = 0.01):
+    self.optimizer = optimizer
+    self.num_params = num_params
+    self.sigma_init = sigma_init
+    self.popsize = popsize
+    self.weight_decay = weight_decay
+    self.solutions = None
+    self.current_param = np.zeros(self.num_params)
+    self.current_reward = np.copy(self.current_param)
+    self.pop_rewards = np.zeros(self.popsize)
+    self.best_param = np.zeros(self.num_params)
+    self.best_reward = None
+    import nevergrad as ng
+    self.op = ng.optimizers.registry[self.optimizer](
+      instrumentation = self.num_params,
+      budget = 1000000, # Budget is arbitrarily big.
+      num_workers = self.popsize)
+    self.candidates = []
+
+  def rms_stdev(self):
+    return self.sigma_init
+
+  def ask(self):
+    '''returns a list of parameters'''
+    solutions = []
+    candidates = []
+    for i in range(self.popsize):
+      candidate = self.op.ask()
+      candidates.append(candidate)
+      solutions.append(candidate.args[0])
+    self.solutions = np.array(solutions)
+    self.candidates = np.array(candidates)
+    return self.solutions
+
+  def tell(self, reward_table_result):
+    reward_table = -np.array(reward_table_result)
+    if self.weight_decay > 0:
+      l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
+      reward_table += l2_decay
+    fitness = []
+    for i in range(self.popsize):
+      value = reward_table[i]
+      fitness.append(value)
+      self.op.tell(self.candidates[i], value)
+    self.pop_rewards = np.asarray(fitness)
+    self.current_reward = np.min(self.pop_rewards)
+    self.current_param = np.copy(self.solutions[np.argmin(self.pop_rewards)])
+    self.best_param = self.op.provide_recommendation().args[0]
+    if self.best_param in self.solutions:
+        self.best_reward = self.current_reward
+
+  def current_param(self):
+    return self.current_param
+
+  def set_mu(self, mu):
+    pass
+
+  def best_param(self):
+    return self.best_param
+
+  def result(self): # return best params so far, along with historically best reward, curr reward, sigma
+    return (self.best_param, self.best_reward, self.current_reward, np.std(self.solutions))
+
 class CMAES:
   '''CMA-ES wrapper.'''
   def __init__(self, num_params,      # number of model parameters
@@ -162,7 +232,7 @@ class PSO:
         '''returns a list of parameters'''
         solutions = []
         if self.first_iteration:
-            self.solutions = solutions
+            self.solutions = np.copy(self.pop_params)
             return self.pop_params
 
         for i in range(self.popsize):
@@ -257,7 +327,7 @@ class local_PSO:
         '''returns a list of parameters'''
         solutions = []
         if self.first_iteration:
-            self.solutions = solutions
+            self.solutions = np.copy(self.pop_params)
             return self.pop_params
 
         for i in range(self.popsize):
