@@ -140,9 +140,6 @@ class Nevergrad:
     self.current_param = np.copy(self.solutions[np.argmin(self.pop_rewards)])
     self.best_param = self.op.provide_recommendation().args[0]
     if any((self.best_param == x).all() for x in self.solutions):
-        if self.first == False:
-            if self.best_reward > self.current_reward:
-                import pdb; pdb.set_trace()
         self.best_reward = self.current_reward
         self.first = False
 
