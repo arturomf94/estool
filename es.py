@@ -108,7 +108,6 @@ class Nevergrad:
       budget = 1000000, # Budget is arbitrarily big.
       num_workers = self.popsize)
     self.candidates = []
-    self.first = True
 
   def rms_stdev(self):
     return self.sigma_init
@@ -141,7 +140,6 @@ class Nevergrad:
     self.best_param = self.op.provide_recommendation().args[0]
     if any((self.best_param == x).all() for x in self.solutions):
         self.best_reward = self.current_reward
-        self.first = False
 
   def current_param(self):
     return self.current_param
