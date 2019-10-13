@@ -108,6 +108,7 @@ class Nevergrad:
       budget = 1000000, # Budget is arbitrarily big.
       num_workers = self.popsize)
     self.candidates = []
+    self.first = True
 
   def rms_stdev(self):
     return self.sigma_init
@@ -138,8 +139,12 @@ class Nevergrad:
     self.current_reward = -np.min(self.pop_rewards)
     self.current_param = np.copy(self.solutions[np.argmin(self.pop_rewards)])
     self.best_param = self.op.provide_recommendation().args[0]
-    if self.best_param in self.solutions:
+    if any((self.best_param == x).all() for x in self.solutions):
+        if self.first == False:
+            if self.best_reward > self.current_reward:
+                import pdb; pdb.set_trace()
         self.best_reward = self.current_reward
+        self.first = False
 
   def current_param(self):
     return self.current_param

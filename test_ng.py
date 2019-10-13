@@ -23,7 +23,7 @@ def sphere(x):
 def deceptivemultimodal(x):
     """Infinitely many local optima, as we get closer to the optimum."""
     x = np.copy(x)
-    x -= 10.0
+    # x -= 10.0
     distance = np.sqrt(x[0] ** 2 + x[1] ** 2)
     if distance == 0.0:
         return 0.0
@@ -37,7 +37,7 @@ fit_func = deceptivemultimodal
 
 NPARAMS = 100        # make this a 100-dimensinal problem.
 NPOPULATION = 101    # use population size of 101.
-MAX_ITERATION = 5000 # run each solver for 5000 generations.
+MAX_ITERATION = 1000 # run each solver for 5000 generations.
 
 # defines a function to use solver to solve fit_func
 def test_solver(solver):
@@ -72,10 +72,4 @@ pso = Nevergrad(optimizer = 'PSO',
                 weight_decay = 0.00)
 pso_hist = test_solver(pso)
 
-cma_ng = Nevergrad(optimizer = 'CMA',
-                num_params = NPARAMS,
-                popsize = NPOPULATION,
-                sigma_init = 0.5,
-                weight_decay = 0.00)
-
-cma_ng_hist = test_solver(cma_ng)
+import pdb; pdb.set_trace()
