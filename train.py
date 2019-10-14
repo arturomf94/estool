@@ -121,7 +121,6 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
       popsize=population)
     es = oes
   else:
-      import pdb; pdb.set_trace()
       if optimizer in list(sorted(ng.optimizers.registry.keys())):
           ng_optimizer = Nevergrad(optimizer,
             num_params,
