@@ -100,7 +100,7 @@ class Nevergrad:
     self.curr_param = np.zeros(self.num_params)
     self.current_reward = np.copy(self.curr_param)
     self.pop_rewards = np.zeros(self.popsize)
-    self.best_param = np.zeros(self.num_params)
+    self.bst_param = np.zeros(self.num_params)
     self.best_reward = None
     import nevergrad as ng
     self.op = ng.optimizers.registry[self.optimizer](
@@ -137,8 +137,8 @@ class Nevergrad:
     self.pop_rewards = np.asarray(fitness)
     self.current_reward = -np.min(self.pop_rewards)
     self.curr_param = np.copy(self.solutions[np.argmin(self.pop_rewards)])
-    self.best_param = self.op.provide_recommendation().args[0]
-    if any((self.best_param == x).all() for x in self.solutions):
+    self.bst_param = self.op.provide_recommendation().args[0]
+    if any((self.bst_param == x).all() for x in self.solutions):
         self.best_reward = self.current_reward
 
   def current_param(self):
@@ -148,10 +148,10 @@ class Nevergrad:
     pass
 
   def best_param(self):
-    return self.best_param
+    return self.bst_param
 
   def result(self): # return best params so far, along with historically best reward, curr reward, sigma
-    return (self.best_param, self.best_reward, self.current_reward, np.std(self.solutions))
+    return (self.bst_param, self.best_reward, self.current_reward, np.std(self.solutions))
 
 class CMAES:
   '''CMA-ES wrapper.'''
