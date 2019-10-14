@@ -98,7 +98,7 @@ class Nevergrad:
     self.weight_decay = weight_decay
     self.solutions = None
     self.curr_param = np.zeros(self.num_params)
-    self.current_reward = np.copy(self.curr_param)
+    self.current_reward = None
     self.pop_rewards = np.zeros(self.popsize)
     self.bst_param = np.zeros(self.num_params)
     self.best_reward = None
@@ -110,7 +110,7 @@ class Nevergrad:
     self.candidates = []
 
   def rms_stdev(self):
-    return self.sigma_init
+    return np.std(self.solutions)
 
   def ask(self):
     '''returns a list of parameters'''
@@ -129,6 +129,7 @@ class Nevergrad:
     if self.weight_decay > 0:
       l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
       reward_table += l2_decay
+    # import pdb; pdb.set_trace()
     fitness = []
     for i in range(self.popsize):
       value = reward_table[i]
@@ -186,6 +187,7 @@ class CMAES:
     if self.weight_decay > 0:
       l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
       reward_table += l2_decay
+    import pdb; pdb.set_trace()
     self.es.tell(self.solutions, (reward_table).tolist()) # convert minimizer to maximizer.
 
   def current_param(self):
