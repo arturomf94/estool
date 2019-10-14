@@ -142,7 +142,6 @@ class Nevergrad:
         self.best_reward = self.current_reward
 
   def current_param(self):
-    import pdb; pdb.set_trace()
     return self.curr_param
 
   def set_mu(self, mu):
