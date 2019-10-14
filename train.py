@@ -20,9 +20,10 @@ import subprocess
 import sys
 import config
 from model import make_model, simulate
-from es import SimpleGA, CMAES, PEPG, OpenES, PSO, modified_PSO, PSO_CMA_ES, local_PSO
+from es import SimpleGA, CMAES, PEPG, OpenES, Nevergrad
 import argparse
 import time
+import nevergrad as ng
 
 
 ### ES related code
@@ -37,7 +38,7 @@ num_worker_trial = 16
 population = num_worker * num_worker_trial
 
 gamename = 'invalid_gamename'
-optimizer = 'pso_cma_es'
+optimizer = 'PSO'
 antithetic = True
 batch_mode = 'mean'
 
@@ -107,36 +108,7 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
       weight_decay=0.005,
       popsize=population)
     es = pepg
-  elif optimizer == 'pso_cma_es':
-    pso_cma_es = PSO_CMA_ES(num_params,
-      sigma_init = sigma_init,
-      c1 = 0.001,
-      c2 = 0.003,
-      w = 0.001,
-      popsize = population,
-      weight_decay=0.005,
-      min_pop_std = 0.5)
-    es = pso_cma_es
-  elif optimizer == 'pso':
-    pso = PSO(num_params,
-      sigma_init = sigma_init,
-      c1 = 0.001,
-      c2 = 0.003,
-      w = 0.001,
-      popsize = population,
-      weight_decay=0.005)
-    es = pso
-  elif optimizer == 'pso_local':
-    pso_local = local_PSO(num_params,
-      sigma_init = sigma_init,
-      c1 = 0.001,
-      c2 = 0.003,
-      w = 0.001,
-      popsize = population,
-      weight_decay=0.005,
-      neighbours = 2)
-    es = pso_local
-  else:
+  elif optimizer == 'oes':
     oes = OpenES(num_params,
       sigma_init=sigma_init,
       sigma_decay=sigma_decay,
@@ -148,6 +120,17 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
       weight_decay=0.005,
       popsize=population)
     es = oes
+  else:
+      import pdb; pdb.set_trace()
+      if optimizer in list(sorted(ng.optimizers.registry.keys())):
+          ng_optimizer = Nevergrad(optimizer,
+            num_params,
+            sigma_init = sigma_init,
+            popsize = population,
+            weight_decay = 0.005)
+          es = ng_optimizer
+      else:
+          raise ValueError('Could not find optimizer!')
 
   PRECISION = 10000
   SOLUTION_PACKET_SIZE = (5+num_params)*num_worker_trial
@@ -453,7 +436,7 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser(description=('Train policy on OpenAI Gym environment '
                                                 'using pepg, ses, openes, ga, cma'))
   parser.add_argument('gamename', type=str, help='robo_pendulum, robo_ant, robo_humanoid, etc.')
-  parser.add_argument('-o', '--optimizer', type=str, help='ses, pepg, openes, ga, cma.', default='pso_cma_es')
+  parser.add_argument('-o', '--optimizer', type=str, help='ses, pepg, openes, ga, cma.', default='PSO')
   parser.add_argument('-e', '--num_episode', type=int, default=1, help='num episodes per trial')
   parser.add_argument('--eval_steps', type=int, default=25, help='evaluate every eval_steps step')
   parser.add_argument('-n', '--num_worker', type=int, default=8)

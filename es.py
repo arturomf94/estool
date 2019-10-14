@@ -97,8 +97,8 @@ class Nevergrad:
     self.popsize = popsize
     self.weight_decay = weight_decay
     self.solutions = None
-    self.current_param = np.zeros(self.num_params)
-    self.current_reward = np.copy(self.current_param)
+    self.curr_param = np.zeros(self.num_params)
+    self.current_reward = np.copy(self.curr_param)
     self.pop_rewards = np.zeros(self.popsize)
     self.best_param = np.zeros(self.num_params)
     self.best_reward = None
@@ -136,13 +136,14 @@ class Nevergrad:
       self.op.tell(self.candidates[i], value)
     self.pop_rewards = np.asarray(fitness)
     self.current_reward = -np.min(self.pop_rewards)
-    self.current_param = np.copy(self.solutions[np.argmin(self.pop_rewards)])
+    self.curr_param = np.copy(self.solutions[np.argmin(self.pop_rewards)])
     self.best_param = self.op.provide_recommendation().args[0]
     if any((self.best_param == x).all() for x in self.solutions):
         self.best_reward = self.current_reward
 
   def current_param(self):
-    return self.current_param
+    import pdb; pdb.set_trace()
+    return self.curr_param
 
   def set_mu(self, mu):
     pass
