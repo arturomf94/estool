@@ -94,7 +94,8 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999, weight_decay = 0.005
   elif optimizer == 'cma':
     cma = CMAES(num_params,
       sigma_init=sigma_init,
-      popsize=population)
+      popsize=population,
+      weight_decay=weight_decay)
     es = cma
   elif optimizer == 'pepg':
     pepg = PEPG(num_params,

@@ -3,7 +3,7 @@ import json
 import os
 import matplotlib.pyplot as plt
 
-env_name = 'mountain_car'
+env_name = 'bullet_racecar'
 optimizer = 'CMA'
 num_rollouts = 1 # number of rollouts that are averaged over an episode
 popsize = 32
