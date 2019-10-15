@@ -187,7 +187,6 @@ class CMAES:
     if self.weight_decay > 0:
       l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
       reward_table += l2_decay
-    import pdb; pdb.set_trace()
     self.es.tell(self.solutions, (reward_table).tolist()) # convert minimizer to maximizer.
 
   def current_param(self):

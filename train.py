@@ -63,7 +63,7 @@ SOLUTION_PACKET_SIZE = (5+num_params)*num_worker_trial
 RESULT_PACKET_SIZE = 4*num_worker_trial
 ###
 
-def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
+def initialize_settings(sigma_init=0.1, sigma_decay=0.9999, weight_decay = 0.005):
   global population, filebase, game, model, num_params, es, PRECISION, SOLUTION_PACKET_SIZE, RESULT_PACKET_SIZE
   population = num_worker * num_worker_trial
   filebase = 'log/'+gamename+'.'+optimizer+'.'+str(num_episode)+'.'+str(population)
@@ -79,7 +79,7 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
       sigma_alpha=0.2,
       sigma_limit=0.02,
       elite_ratio=0.1,
-      weight_decay=0.005,
+      weight_decay=weight_decay,
       popsize=population)
     es = ses
   elif optimizer == 'ga':
@@ -88,7 +88,7 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
       sigma_decay=sigma_decay,
       sigma_limit=0.02,
       elite_ratio=0.1,
-      weight_decay=0.005,
+      weight_decay=weight_decay,
       popsize=population)
     es = ga
   elif optimizer == 'cma':
@@ -105,7 +105,7 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
       learning_rate=0.01,
       learning_rate_decay=1.0,
       learning_rate_limit=0.01,
-      weight_decay=0.005,
+      weight_decay=weight_decay,
       popsize=population)
     es = pepg
   elif optimizer == 'oes':
@@ -117,7 +117,7 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
       learning_rate_decay=1.0,
       learning_rate_limit=0.01,
       antithetic=antithetic,
-      weight_decay=0.005,
+      weight_decay=weight_decay,
       popsize=population)
     es = oes
   else:
@@ -126,7 +126,7 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
             num_params,
             sigma_init = sigma_init,
             popsize = population,
-            weight_decay = 0.005)
+            weight_decay = weight_decay)
           es = ng_optimizer
       else:
           raise ValueError('Could not find optimizer!')
@@ -399,7 +399,7 @@ def main(args):
   cap_time_mode= (args.cap_time == 1)
   seed_start = args.seed_start
 
-  initialize_settings(args.sigma_init, args.sigma_decay)
+  initialize_settings(args.sigma_init, args.sigma_decay, args.weight_decay)
 
   sprint("process", rank, "out of total ", comm.Get_size(), "started")
   if (rank == 0):
@@ -446,6 +446,7 @@ if __name__ == "__main__":
   parser.add_argument('-s', '--seed_start', type=int, default=111, help='initial seed')
   parser.add_argument('--sigma_init', type=float, default=0.10, help='sigma_init')
   parser.add_argument('--sigma_decay', type=float, default=0.999, help='sigma_decay')
+  parser.add_argument('--weight_decay', type=float, default = 0.005, help='weight_decay')
 
   args = parser.parse_args()
   if "parent" == mpi_fork(args.num_worker+1): os.exit()
