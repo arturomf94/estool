@@ -28,6 +28,18 @@ mountain_car = Game(env_name='MountainCarContinuous-v0',
 )
 games['mountain_car'] = mountain_car
 
+luna_lander = Game(env_name='LunarLanderContinuous-v2',
+  input_size=8,
+  output_size=2,
+  time_factor=0,
+  layers=[32, 5],
+  activation='tanh',
+  noise_bias=0.0,
+  output_noise=[False, False, False],
+  rnn_mode=False,
+)
+games['luna_lander'] = luna_lander
+
 bullet_pendulum = Game(env_name='InvertedPendulumSwingupBulletEnv-v0',
   input_size=5,
   output_size=1,
