@@ -16,18 +16,6 @@ cartpole_swingup = Game(env_name='CartPoleSwingUp',
 )
 games['cartpole_swingup'] = cartpole_swingup
 
-pendulum = Game(env_name='Pendulum-v0',
-  input_size=3,
-  output_size=1,
-  time_factor=0,
-  layers=[10, 0],
-  activation='tanh',
-  noise_bias=0.0,
-  output_noise=[False, False, False],
-  rnn_mode=False,
-)
-games['pendulum'] = pendulum
-
 mountain_car = Game(env_name='MountainCarContinuous-v0',
   input_size=2,
   output_size=1,
