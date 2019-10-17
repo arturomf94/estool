@@ -105,7 +105,7 @@ class Nevergrad:
     import nevergrad as ng
     self.op = ng.optimizers.registry[self.optimizer](
       instrumentation = self.num_params,
-      budget = 1000000, # Budget is arbitrarily big.
+      # budget = 1000000, # Budget is arbitrarily big.
       num_workers = self.popsize)
     self.candidates = []
 
@@ -205,9 +205,9 @@ class CMAES:
 class PSO:
     ''' Standard Particle Swarm Optimisation '''
     def __init__(self, num_params,
-                 c1 = np.random.uniform(),
-                 c2 = np.random.uniform(),
-                 w = np.random.uniform(),
+                 c1 = 0.5 + np.log(2.0),
+                 c2 = 0.5 + np.log(2.0),
+                 w = 0.5 / np.log(2.0),
                  popsize = 256,
                  sigma_init = 0.1,
                  weight_decay = 0.01):
@@ -228,6 +228,9 @@ class PSO:
         self.gbest_param = self.pop_params[np.argmax(self.pop_rewards)]
         self.gbest_reward = np.max(self.pop_rewards)
         self.first_iteration = True
+        print(self.c1)
+        print(self.c2)
+        print(self.w)
 
     def ask(self):
         '''returns a list of parameters'''
@@ -282,7 +285,7 @@ class PSO:
             self.best_param = np.copy(self.pop_params[np.argmax(reward_table)])
 
     def rms_stdev(self):
-        return self.sigma_init # same sigma for all parameters.
+        return np.std(self.solutions) # same sigma for all parameters.
 
     def best_param(self):
         return self.best_param
