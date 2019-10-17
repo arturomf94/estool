@@ -1,4 +1,4 @@
 __pycache__/
 custom_envs/__pycache__/
 env/
-log/*.json
+#log/*.json
