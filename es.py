@@ -297,9 +297,9 @@ class PSO:
 class local_PSO:
     ''' Standard Particle Swarm Optimisation '''
     def __init__(self, num_params,
-                 c1 = np.random.uniform(),
-                 c2 = np.random.uniform(),
-                 w = np.random.uniform(),
+                 c1 = 0.5 + np.log(2.0),
+                 c2 = 0.5 + np.log(2.0),
+                 w = 0.5 / np.log(2.0),
                  popsize = 256,
                  sigma_init = 0.1,
                  weight_decay = 0.01,
