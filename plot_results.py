@@ -3,10 +3,10 @@ import json
 import os
 import matplotlib.pyplot as plt
 
-env_name = 'mountain_car'
-optimizer = 'CMA'
+env_name = 'cartpole_swingup'
+optimizer = 'oes'
 num_rollouts = 1 # number of rollouts that are averaged over an episode
-popsize = 36
+popsize = 48
 
 file_base = env_name+'.'+optimizer+'.'+str(num_rollouts)+'.'+str(popsize)
 filename = os.path.join('log', file_base+'.hist.json')
