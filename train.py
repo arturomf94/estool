@@ -121,7 +121,7 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999, weight_decay = 0.005
       weight_decay=weight_decay,
       popsize=population)
     es = oes
-  elif optimizer == 'psom':
+  elif optimizer == 'pso':
     oes = PSO(num_params,
       sigma_init=sigma_init,
       weight_decay=weight_decay,
@@ -320,7 +320,7 @@ def master():
     t += 1
 
     solutions = es.ask()
-    #print(solutions[0])
+
     if antithetic:
       seeds = seeder.next_batch(int(es.popsize/2))
       seeds = seeds+seeds
@@ -389,7 +389,6 @@ def master():
           sprint("reset to previous best params, where best_reward_eval =", best_reward_eval)
           es.set_mu(best_model_params_eval)
       with open(filename_best, 'wt') as out:
-        print(best_reward_eval)
         res = json.dump([best_model_params_eval, best_reward_eval], out, sort_keys=True, indent=0, separators=(',', ': '))
       sprint("improvement", t, improvement, "curr", reward_eval, "prev", prev_best_reward_eval, "best", best_reward_eval)
 
