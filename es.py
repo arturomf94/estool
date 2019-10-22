@@ -202,6 +202,93 @@ class CMAES:
     r = self.es.result
     return (r[0], -r[1], -r[1], r[6])
 
+class Pyswarms:
+    ''' Pyswarms Wrapper '''
+    def __init__(self,
+                 num_params,
+                 c1 = 0.5 + np.log(2.0),
+                 c2 = 0.5 + np.log(2.0),
+                 w = 0.5 / np.log(2.0),
+                 popsize = 256,
+                 sigma_init = 0.1,
+                 weight_decay = 0.01):
+        self.num_params = num_params
+        self.c1 = c1
+        self.c2 = c2
+        self.w = w
+        self.popsize = popsize
+        self.sigma_init = sigma_init
+        self.weight_decay = weight_decay
+        self.best_param = np.zeros(self.num_params)
+        self.best_reward = 0
+        self.pop_params = np.random.randn(self.popsize, self.num_params) * self.sigma_init
+        self.pbest_params = self.pop_params
+        self.pbest_rewards = np.zeros(self.popsize)
+        self.pop_vel = np.zeros((self.popsize, self.num_params))
+        self.pop_rewards = np.zeros(self.popsize)
+        self.gbest_param = self.pop_params[np.argmax(self.pop_rewards)]
+        self.gbest_reward = np.max(self.pop_rewards)
+        self.first_iteration = True
+
+        # Import backend modules
+        l_lims = -np.ones(self.num_params)
+        u_lims = np.ones(self.num_params)
+        bounds = (l_lims, u_lims)
+        import pyswarms.backend as P
+        self.P = P
+        from pyswarms.backend.topology import Star
+        self.topology = Star() # The Topology Class
+        self.options = {'c1': self.c1, 'c2': self.c2, 'w': self.w} # arbitrarily set
+        self.swarm = self.P.create_swarm(n_particles = self.popsize,
+            dimensions = self.num_params,
+            options = self.options,
+            center = self.sigma_init,
+            bounds = bounds)
+
+    def ask(self):
+        '''returns a list of parameters'''
+        if self.first_iteration:
+            self.solutions = np.copy(self.swarm.position)
+            return self.pop_params
+
+        self.swarm.velocity = self.topology.compute_velocity(self.swarm)
+        self.swarm.position = self.topology.compute_position(self.swarm)
+        self.solutions = np.copy(self.swarm.position)
+        return self.solutions
+
+    def tell(self, reward_table_result):
+        # input must be a numpy float array
+        assert(len(reward_table_result) == self.popsize), "Inconsistent reward_table size reported."
+
+        reward_table = -np.array(reward_table_result) # Maximize!
+
+        if self.weight_decay > 0:
+          l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
+          reward_table += l2_decay
+
+        self.swarm.current_cost = reward_table #pyswarm
+
+        if self.first_iteration:
+            self.first_iteration = False
+            self.swarm.pbest_cost = np.copy(self.swarm.current_cost)
+        else:
+            self.swarm.pbest_pos, self.swarm.pbest_cost = self.P.compute_pbest(self.swarm) # Update and store
+
+        if np.min(self.swarm.pbest_cost) < self.swarm.best_cost:
+            self.swarm.best_pos, self.swarm.best_cost = self.topology.compute_gbest(self.swarm)
+
+    def rms_stdev(self):
+        return np.std(self.solutions)
+
+    def best_param(self):
+        return self.swarm.best_pos
+
+    def current_param(self):
+        return self.solutions[np.argmin(self.swarm.current_cost)]
+
+    def result(self): # return best params so far, along with historically best reward, curr reward, sigma_init
+        return (self.swarm.best_pos, -self.swarm.best_cost, -np.min(self.swarm.current_cost), self.sigma_init)
+
 class PSO:
     ''' Standard Particle Swarm Optimisation '''
     def __init__(self,

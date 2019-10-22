@@ -20,7 +20,7 @@ import subprocess
 import sys
 import config
 from model import make_model, simulate
-from es import SimpleGA, CMAES, PEPG, OpenES, Nevergrad, PSO
+from es import SimpleGA, CMAES, PEPG, OpenES, Nevergrad, PSO, Pyswarms
 import argparse
 import time
 import nevergrad as ng
@@ -121,12 +121,18 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999, weight_decay = 0.005
       weight_decay=weight_decay,
       popsize=population)
     es = oes
+  # elif optimizer == 'pso':
+  #   pso = PSO(num_params,
+  #     sigma_init=sigma_init,
+  #     weight_decay=weight_decay,
+  #     popsize=population)
+  #   es = pso
   elif optimizer == 'pso':
-    oes = PSO(num_params,
+    pso = Pyswarms(num_params,
       sigma_init=sigma_init,
       weight_decay=weight_decay,
       popsize=population)
-    es = oes
+    es = pso
   else:
       if optimizer in list(sorted(ng.optimizers.registry.keys())):
           ng_optimizer = Nevergrad(optimizer,

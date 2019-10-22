@@ -1,4 +1,5 @@
 __pycache__/
 custom_envs/__pycache__/
 env/
+report.log
 #log/*.json
