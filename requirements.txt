@@ -6,3 +6,5 @@ pybullet==1.6.3
 box2d-py
 roboschool
 nevergrad
+pyswarms
+pyyaml
