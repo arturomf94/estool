@@ -4,9 +4,9 @@ import os
 import matplotlib.pyplot as plt
 
 env_name = 'biped'
-optimizer = 'oes'
+optimizer = 'pso'
 num_rollouts = 1 # number of rollouts that are averaged over an episode
-popsize = 90
+popsize = 92
 
 file_base = env_name+'.'+optimizer+'.'+str(num_rollouts)+'.'+str(popsize)
 filename = os.path.join('log', file_base+'.hist.json')

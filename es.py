@@ -211,7 +211,8 @@ class Pyswarms:
                  w = 0.5 / np.log(2.0),
                  popsize = 256,
                  sigma_init = 0.1,
-                 weight_decay = 0.01):
+                 weight_decay = 0.01,
+                 communication_topology = 'star'):
         self.num_params = num_params
         self.c1 = c1
         self.c2 = c2
@@ -236,9 +237,15 @@ class Pyswarms:
         bounds = (l_lims, u_lims)
         import pyswarms.backend as P
         self.P = P
-        from pyswarms.backend.topology import Star
-        self.topology = Star() # The Topology Class
-        self.options = {'c1': self.c1, 'c2': self.c2, 'w': self.w} # arbitrarily set
+        self.communication_topology = communication_topology
+        # Unless specified, use the star topology.
+        if self.communication_topology == 'random':
+            from pyswarms.backend.topology import Random
+            self.topology = Random() # The Topology Class
+        else:
+            from pyswarms.backend.topology import Star
+            self.topology = Star() # The Topology Class
+        self.options = {'c1': self.c1, 'c2': self.c2, 'w': self.w}
         self.swarm = self.P.create_swarm(n_particles = self.popsize,
             dimensions = self.num_params,
             options = self.options,
@@ -275,7 +282,10 @@ class Pyswarms:
             self.swarm.pbest_pos, self.swarm.pbest_cost = self.P.compute_pbest(self.swarm) # Update and store
 
         if np.min(self.swarm.pbest_cost) < self.swarm.best_cost:
-            self.swarm.best_pos, self.swarm.best_cost = self.topology.compute_gbest(self.swarm)
+            if self.communication_topology == 'random':
+                self.swarm.best_pos, self.swarm.best_cost = self.topology.compute_gbest(self.swarm, k = 4)
+            else: # star
+                self.swarm.best_pos, self.swarm.best_cost = self.topology.compute_gbest(self.swarm)
 
     def rms_stdev(self):
         return np.std(self.solutions)
