@@ -237,11 +237,17 @@ class Pyswarms:
         bounds = (l_lims, u_lims)
         import pyswarms.backend as P
         self.P = P
+        # Global topology will always be used to compute gbest
+        from pyswarms.backend.topology import Star
+        self.global_topology = Star()
         self.communication_topology = communication_topology
         # Unless specified, use the star topology.
         if self.communication_topology == 'random':
             from pyswarms.backend.topology import Random
             self.topology = Random() # The Topology Class
+        elif self.communication_topology == 'local':
+            from pyswarms.backend.topology import Ring
+            self.topology = Ring() # The Topology Class
         else:
             from pyswarms.backend.topology import Star
             self.topology = Star() # The Topology Class
@@ -275,29 +281,40 @@ class Pyswarms:
 
         self.swarm.current_cost = reward_table #pyswarm
 
+        # If it's the first iteration, initialize pbest_cost, best_reward and
+        # best_param
         if self.first_iteration:
             self.first_iteration = False
             self.swarm.pbest_cost = np.copy(self.swarm.current_cost)
+            self.best_reward = np.min(self.swarm.current_cost)
+            self.best_param = self.solutions[np.argmin(self.swarm.current_cost)]
         else:
             self.swarm.pbest_pos, self.swarm.pbest_cost = self.P.compute_pbest(self.swarm) # Update and store
 
-        if np.min(self.swarm.pbest_cost) < self.swarm.best_cost:
-            if self.communication_topology == 'random':
-                self.swarm.best_pos, self.swarm.best_cost = self.topology.compute_gbest(self.swarm, k = 4)
-            else: # star
-                self.swarm.best_pos, self.swarm.best_cost = self.topology.compute_gbest(self.swarm)
+        # Update gbest.
+        if self.communication_topology == 'random':
+            self.swarm.best_pos, self.swarm.best_cost = self.topology.compute_gbest(self.swarm, k = 4)
+        elif self.communication_topology == 'local':
+            self.swarm.best_pos, self.swarm.best_cost = self.topology.compute_gbest(self.swarm, p = 2, k = 2)
+        else: # star
+            self.swarm.best_pos, self.swarm.best_cost = self.topology.compute_gbest(self.swarm)
+
+        # Update best_reward and best_param if pertinent.
+        if np.min(self.swarm.pbest_cost) < self.best_reward:
+            self.best_reward = np.min(self.swarm.pbest_cost)
+            self.best_param = self.solutions[np.argmin(self.swarm.pbest_cost)]
 
     def rms_stdev(self):
         return np.std(self.solutions)
 
     def best_param(self):
-        return self.swarm.best_pos
+        return self.best_param
 
     def current_param(self):
         return self.solutions[np.argmin(self.swarm.current_cost)]
 
     def result(self): # return best params so far, along with historically best reward, curr reward, sigma_init
-        return (self.swarm.best_pos, -self.swarm.best_cost, -np.min(self.swarm.current_cost), self.sigma_init)
+        return (self.best_param, -self.best_reward, -np.min(self.swarm.current_cost), self.sigma_init)
 
 class PSO:
     ''' Standard Particle Swarm Optimisation '''

@@ -127,11 +127,26 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999, weight_decay = 0.005
   #     weight_decay=weight_decay,
   #     popsize=population)
   #   es = pso
-  elif optimizer == 'pso':
+  elif optimizer == 'global_pso':
     pso = Pyswarms(num_params,
       sigma_init=sigma_init,
       weight_decay=weight_decay,
-      popsize=population)
+      popsize=population,
+      communication_topology = 'global')
+    es = pso
+  elif optimizer == 'local_pso':
+    pso = Pyswarms(num_params,
+      sigma_init=sigma_init,
+      weight_decay=weight_decay,
+      popsize=population,
+      communication_topology = 'local')
+    es = pso
+  elif optimizer == 'random_pso':
+    pso = Pyswarms(num_params,
+      sigma_init=sigma_init,
+      weight_decay=weight_decay,
+      popsize=population,
+      communication_topology = 'random')
     es = pso
   else:
       if optimizer in list(sorted(ng.optimizers.registry.keys())):

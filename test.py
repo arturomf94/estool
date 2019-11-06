@@ -3,23 +3,22 @@ import matplotlib.pyplot as plt
 import cma
 from es import SimpleGA, CMAES, PEPG, OpenES, Pyswarms
 
-def rastrigin_shifted(x):
-  """Rastrigin test objective function, shifted by 10. units away from origin"""
+def rastrigin(x):
+  """Rastrigin test objective function"""
   x = np.copy(x)
-  x -= 10.0
+  #x -= 10.0
   if not np.isscalar(x[0]):
     N = len(x[0])
     return -np.array([10 * N + sum(xi**2 - 10 * np.cos(2 * np.pi * xi)) for xi in x])
   N = len(x)
   return -(10 * N + sum(x**2 - 10 * np.cos(2 * np.pi * x)))
 
-fit_func = rastrigin_shifted
+fit_func = rastrigin
 
 NPARAMS = 100        # make this a 100-dimensinal problem.
-NPOPULATION = 101    # use population size of 101.
-MAX_ITERATION = 5000 # run each solver for 5000 generations.
+NPOPULATION = 100    # use population size of 101.
+MAX_ITERATION = 5000
 
-# defines a function to use solver to solve fit_func
 def test_solver(solver):
   history = []
   for j in range(MAX_ITERATION):
@@ -36,12 +35,9 @@ def test_solver(solver):
   print("fitness score at this local optimum:", result[1])
   return history
 
-pso = Pyswarms(
-        num_params = NPARAMS,
-        popsize = NPOPULATION,
-        sigma_init = 1,
-        weight_decay = 0.00,
-        communication_topology = 'random'
-      )
-
-pso_history = test_solver(pso)
+pso = Pyswarms(num_params = NPARAMS,
+          popsize = NPOPULATION,
+          sigma_init = 1,
+          weight_decay = 0.00,
+          communication_topology = 'random')
+pso_hist = test_solver(pso)
