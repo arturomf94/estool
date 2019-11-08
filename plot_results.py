@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 
 env_name = 'biped'
-optimizer = 'pso'
+optimizer = 'random_pso_75'
 num_rollouts = 1 # number of rollouts that are averaged over an episode
 popsize = 92
 

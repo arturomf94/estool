@@ -293,7 +293,7 @@ class Pyswarms:
 
         # Update gbest.
         if self.communication_topology == 'random':
-            self.swarm.best_pos, self.swarm.best_cost = self.topology.compute_gbest(self.swarm, k = 4)
+            self.swarm.best_pos, self.swarm.best_cost = self.topology.compute_gbest(self.swarm, k = (self.popsize * 3 )// 4) # k = 4 typically
         elif self.communication_topology == 'local':
             self.swarm.best_pos, self.swarm.best_cost = self.topology.compute_gbest(self.swarm, p = 2, k = 2)
         else: # star
