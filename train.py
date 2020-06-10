@@ -449,8 +449,8 @@ def mpi_fork(n):
       OMP_NUM_THREADS="1",
       IN_MPI="1"
     )
-    print( ["mpirun", "-np", str(n), sys.executable] + sys.argv)
-    subprocess.check_call(["mpirun", "-np", str(n), sys.executable] +['-u']+ sys.argv, env=env)
+    print( ["mpirun", "--oversubscribe", "-np", str(n), sys.executable] + sys.argv)
+    subprocess.check_call(["mpirun", "--oversubscribe", "-np", str(n), sys.executable] +['-u']+ sys.argv, env=env)
     return "parent"
   else:
     global nworkers, rank
@@ -463,7 +463,7 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser(description=('Train policy on OpenAI Gym environment '
                                                 'using pepg, ses, openes, ga, cma'))
   parser.add_argument('gamename', type=str, help='robo_pendulum, robo_ant, robo_humanoid, etc.')
-  parser.add_argument('-o', '--optimizer', type=str, help='ses, pepg, openes, ga, cma.', default='PSO')
+  parser.add_argument('-o', '--optimizer', type=str, help='ses, pepg, openes, ga, cma.', default='global_pso')
   parser.add_argument('-e', '--num_episode', type=int, default=1, help='num episodes per trial')
   parser.add_argument('--eval_steps', type=int, default=25, help='evaluate every eval_steps step')
   parser.add_argument('-n', '--num_worker', type=int, default=8)
